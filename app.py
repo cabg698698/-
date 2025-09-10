@@ -1,8 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, jsonify
 import psycopg2
 import pandas as pd
-import webbrowser
-import os
 
 app = Flask(__name__)
 
@@ -14,74 +12,55 @@ def get_data():
     conn.close()
     return df
 
-@app.route('/')
+@app.route("/")
 def index():
-    df = get_data()
-    return render_template('index.html', data=df.to_dict(orient='records'))
+    return render_template("index.html")
 
-@app.route('/search', methods=['POST'])
+@app.route("/search", methods=["GET"])
 def search():
-    keyword = request.form['keyword']
+    keyword = request.args.get("keyword", "").strip()
     df = get_data()
-    results = df[df['box_name'].astype(str).str.contains(keyword, case=False, na=False)]
-    return render_template('index.html', data=results.to_dict(orient='records'))
+    results = df[df["box_name"].str.contains(keyword, case=False, na=False)]
+    return jsonify(results.to_dict(orient="records"))
 
-@app.route('/add', methods=['POST'])
+@app.route("/add", methods=["POST"])
 def add():
-    data = {key: request.form[key] for key in ['box_name', 'address', 'lng_lat', 'entry_method', 'source_type', 'remark']}
+    data = request.json
     conn = psycopg2.connect(db_url)
     cursor = conn.cursor()
-    cursor.execute("""INSERT INTO box_data (box_name, address, lng_lat, entry_method, source_type, remark)
-                      VALUES (%s, %s, %s, %s, %s, %s)""", tuple(data.values()))
+    cursor.execute(
+        "INSERT INTO box_data (box_name, address, lng_lat, entry_method, source_type, remark) VALUES (%s, %s, %s, %s, %s, %s)",
+        (data["box_name"], data["address"], data["lng_lat"], data["entry_method"], data["source_type"], data["remark"])
+    )
     conn.commit()
     cursor.close()
     conn.close()
-    return redirect(url_for('index'))
+    return jsonify({"status": "success"})
 
-@app.route('/edit/<box_name>', methods=['GET', 'POST'])
-def edit(box_name):
+@app.route("/update", methods=["POST"])
+def update():
+    data = request.json
     conn = psycopg2.connect(db_url)
-    if request.method == 'POST':
-        data = {key: request.form[key] for key in ['box_name', 'address', 'lng_lat', 'entry_method', 'source_type', 'remark']}
-        cursor = conn.cursor()
-        cursor.execute("""UPDATE box_data SET box_name=%s, address=%s, lng_lat=%s, entry_method=%s, source_type=%s, remark=%s
-                          WHERE box_name=%s""", tuple(data.values()) + (box_name,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return redirect(url_for('index'))
-    else:
-        df = pd.read_sql_query("SELECT * FROM box_data WHERE box_name = %s", conn, params=(box_name,))
-        conn.close()
-        return render_template('edit.html', data=df.iloc[0].to_dict())
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE box_data SET box_name=%s, address=%s, lng_lat=%s, entry_method=%s, source_type=%s, remark=%s WHERE box_name=%s",
+        (data["box_name"], data["address"], data["lng_lat"], data["entry_method"], data["source_type"], data["remark"], data["original_box_name"])
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"status": "success"})
 
-@app.route('/delete/<box_name>', methods=['POST'])
-def delete(box_name):
-    password = request.form['password']
-    if password == '9487':
-        conn = psycopg2.connect(db_url)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM box_data WHERE box_name = %s", (box_name,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-    return redirect(url_for('index'))
+@app.route("/delete", methods=["POST"])
+def delete():
+    data = request.json
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM box_data WHERE box_name = %s", (data["box_name"],))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"status": "success"})
 
-@app.route('/map/address/<address>')
-def map_address(address):
-    webbrowser.open(f"https://www.google.com/maps/search/{address}")
-    return redirect(url_for('index'))
-
-@app.route('/map/coordinates/<lng_lat>')
-def map_coordinates(lng_lat):
-    coords = lng_lat.replace(" ", "").replace("，", ",").split(",")
-    if len(coords) == 2:
-        webbrowser.open(f"https://www.google.com/maps?q={coords[0]},{coords[1]}")
-    return redirect(url_for('index'))
-
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-
-
+if __name__ == "__main__":
+    app.run(debug=True)

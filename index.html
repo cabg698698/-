@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<title>地點查詢 App</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="/static/manifest.json" rel="manifest"/>
+<script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/static/service-worker.js")
+                .then(reg => console.log("Service Worker registered:", reg.scope))
+                .catch(err => console.error("Service Worker registration failed:", err));
+        }
+    </script>
+<style>
+        body { background-color: #121212; color: white; font-family: sans-serif; padding: 20px; }
+        input, button { margin: 5px; padding: 8px; }
+        .card { background-color: #2c2c2c; padding: 10px; margin: 10px 0; border-radius: 8px; }
+</style>
+</head>
+<body>
+<h2>🔍 地點查詢</h2>
+<input id="keyword" placeholder="輸入地點名稱" type="text"/>
+<button onclick="search()">查詢</button>
+<div id="results"></div>
+
+<h2>➕ 新增地點</h2>
+<div>
+<input id="add_name" placeholder="地點名稱"/>
+<input id="add_address" placeholder="地址"/>
+<input id="add_lnglat" placeholder="座標"/>
+<input id="add_entry" placeholder="走法"/>
+<input id="add_source" placeholder="電源"/>
+<input id="add_remark" placeholder="備註"/>
+<button onclick="add()">新增</button>
+</div>
+
+
+
+
+
+
+
+<script>
+
+
+        function add() {
+            const data = {
+                box_name: document.getElementById("add_name").value,
+                address: document.getElementById("add_address").value,
+                lng_lat: document.getElementById("add_lnglat").value,
+                entry_method: document.getElementById("add_entry").value,
+                source_type: document.getElementById("add_source").value,
+                remark: document.getElementById("add_remark").value
+            };
+			let box = document.getElementById("add_name").value;
+			document.getElementById("keyword").value = document.getElementById("add_name").value;
+            fetch("/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            }).then(() => search());
+			
+			document.getElementById("add_name").value = "";
+			document.getElementById("add_address").value = "";
+			document.getElementById("add_lnglat").value = "";
+			document.getElementById("add_entry").value = "";
+			document.getElementById("add_source").value = "";
+			document.getElementById("add_remark").value = "";
+			alert("新增地點名" + box + "已成功");
+        }
+
+
+
+        function remove(name) {
+            const pwd = prompt("請輸入密碼刪除");
+            if (pwd !== "9487") return alert("密碼錯誤");
+            fetch("/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ box_name: name })
+            }).then(() => search());
+        }
+    </script>
+
+<script>
+function renderCard(item) {
+  return `
+    <div class="card" id="card-${item.box_name}">
+		<strong><span>${item.box_name}</span></strong><br>
+		地址：<span><a href="https://www.google.com/maps/search/${item.address}" target="_blank" style="color: green">${item.address}</a></span><br>
+		座標：<span><a href="https://www.google.com/maps?q=${item.lng_lat}" target="_blank" style="color: green">${item.lng_lat}</a></span><br>
+		走法：<span>${item.entry_method}</span><br>
+		電源：<span>${item.source_type}</span><br>
+		備註：<span>${item.remark}</span><br>
+		<button onclick="enableEdit('${item.box_name}')">修改</button>
+		<button onclick='remove("${item.box_name}")'>刪除</button>
+    </div>
+  `;
+}
+
+function enableEdit(boxName) {
+  const card = document.getElementById(`card-${boxName}`);
+  const spans = card.querySelectorAll("span");
+  const values = Array.from(spans).map(s => s.textContent);
+  card.innerHTML = `
+    <div class="edit-form">
+      <label>地點名稱: <input type="text" id="edit-box_name" value="${values[0]}"></label><br>
+      <label>地址: <input type="text" id="edit-address" value="${values[1]}"></label><br>
+      <label>座標: <input type="text" id="edit-lng_lat" value="${values[2]}"></label><br>
+      <label>走法: <input type="text" id="edit-entry_method" value="${values[3]}"></label><br>
+      <label>電源: <input type="text" id="edit-source_type" value="${values[4]}"></label><br>
+      <label>備註: <input type="text" id="edit-remark" value="${values[5]}"></label><br>
+      <button onclick="saveEdit('${boxName}')">儲存</button>
+      <button onclick="deleteCard('${boxName}')">刪除</button>
+    </div>
+  `;
+}
+
+function saveEdit(originalBoxName) {
+  const data = {
+    original_box_name: originalBoxName,
+    box_name: document.getElementById("edit-box_name").value,
+    address: document.getElementById("edit-address").value,
+    lng_lat: document.getElementById("edit-lng_lat").value,
+    entry_method: document.getElementById("edit-entry_method").value,
+    source_type: document.getElementById("edit-source_type").value,
+    remark: document.getElementById("edit-remark").value
+  };
+  fetch("/update", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  }).then(res => res.json()).then(() => search());
+}
+
+function deleteCard(boxName) {
+  fetch("/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ box_name: boxName })
+  }).then(res => res.json()).then(() => search());
+}
+
+function search() {
+  const keyword = document.getElementById("keyword").value;
+  fetch(`/search?keyword=${encodeURIComponent(keyword)}`)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById("results");
+      container.innerHTML = data.map(renderCard).join("");
+    });
+}
+</script>
+
+</body>
+</html>
+
+
+<!-- Editable Card Template -->
+
+
+
+
+
+<script>
+document.querySelectorAll('.edit-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const card = btn.closest('.box-card');
+    card.querySelectorAll('.editable').forEach(input => input.disabled = false);
+    btn.style.display = 'none';
+    card.querySelector('.save-btn').style.display = 'inline-block';
+  });
+});
+
+document.querySelectorAll('.save-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const card = btn.closest('.box-card');
+    const inputs = card.querySelectorAll('.editable');
+    const originalBoxName = card.dataset.boxName;
+
+    const data = {
+      original_box_name: originalBoxName,
+      box_name: inputs[0].value,
+      address: inputs[1].value,
+      lng_lat: inputs[2].value,
+      entry_method: inputs[3].value,
+      source_type: inputs[4].value,
+      remark: inputs[5].value
+    };
+
+    const res = await fetch('/update', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+    if (result.status === 'success') {
+      alert('更新成功');
+      inputs.forEach(input => input.disabled = true);
+      btn.style.display = 'none';
+      card.querySelector('.edit-btn').style.display = 'inline-block';
+      card.dataset.boxName = data.box_name;
+    } else {
+      alert('更新失敗');
+    }
+  });
+});
+</script>

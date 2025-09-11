@@ -17,7 +17,7 @@
         body { background-color: #121212; color: white; font-family: sans-serif; padding: 20px; }
         input, button { margin: 5px; padding: 8px; }
         .card { background-color: #2c2c2c; padding: 10px; margin: 10px 0; border-radius: 8px; }
-    </style>
+</style>
 </head>
 <body>
 <h2>🔍 地點查詢</h2>
@@ -86,11 +86,20 @@
 
 <script>
 function renderCard(item) {
+  let address_link = item.address,address_link_1 = "",address_link_2 = ""
+  
+  if (address_link.includes("樓")) {
+    address_link = address_link.split("號");
+	address_link_1 = address_link[0] + "號"
+	address_link_2 = address_link[1]
+  }else{address_link = address_link.split(",");}
+	address_link_1 = address_link[0]
+	address_link_2 = address_link[1]
   return `
     <div class="card" id="card-${item.box_name}">
 		<strong><span>${item.box_name}</span></strong><br>
-		地址：<span><a href="https://www.google.com/maps/search/${item.address}" target="_blank">${item.address}</a></span><br>
-		座標：<span><a href="https://www.google.com/maps?q=${item.lng_lat}" target="_blank">${item.lng_lat}</a></span><br>
+		地址：<span><a href="https://www.google.com/maps/search/${encodeURIComponent(address_link_1)}",${encodeURIComponent(address_link_2)} target="_blank" style="color: green">${item.address}</a></span><br>
+		座標：<span><a href="https://www.google.com/maps?q=${item.lng_lat}" target="_blank" style="color: green">${item.lng_lat}</a></span><br>
 		走法：<span>${item.entry_method}</span><br>
 		電源：<span>${item.source_type}</span><br>
 		備註：<span>${item.remark}</span><br>

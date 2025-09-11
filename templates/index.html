@@ -54,9 +54,7 @@
                 source_type: document.getElementById("add_source").value,
                 remark: document.getElementById("add_remark").value
             };
-			const pwd = prompt("請輸入密碼新增");
-			let box = document.getElementById("add_name").value;			            
-            if (pwd !== "9487") return alert("密碼錯誤");
+			let box = document.getElementById("add_name").value;
 			document.getElementById("keyword").value = document.getElementById("add_name").value;
             fetch("/add", {
                 method: "POST",
@@ -88,10 +86,19 @@
 
 <script>
 function renderCard(item) {
+  let address_link = item.address,address_link_1 = "",address_link_2 = ""
+  
+  if (address_link.includes("樓")) {
+    address_link = address_link.split("號");
+	address_link_1 = address_link[0] + "號"
+	address_link_2 = address_link[1]
+  }else{address_link = address_link.split(",");}
+	address_link_1 = address_link[0]
+	address_link_2 = address_link[1]
   return `
     <div class="card" id="card-${item.box_name}">
 		<strong><span>${item.box_name}</span></strong><br>
-		地址：<span><a href="https://www.google.com/maps/search/${item.address}" target="_blank" style="color: green">${item.address}</a></span><br>
+		地址：<span><a href="https://www.google.com/maps/search/${encodeURIComponent(address_link_1)}",${encodeURIComponent(address_link_2)} target="_blank" style="color: green">${item.address}</a></span><br>
 		座標：<span><a href="https://www.google.com/maps?q=${item.lng_lat}" target="_blank" style="color: green">${item.lng_lat}</a></span><br>
 		走法：<span>${item.entry_method}</span><br>
 		電源：<span>${item.source_type}</span><br>

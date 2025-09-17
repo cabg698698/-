@@ -20,8 +20,10 @@ def index():
 @app.route("/search", methods=["GET"])
 def search():
     keyword = request.args.get("keyword", "").strip()
+    print(keyword)
     df = get_data()
-    results = df[df["box_name"].str.contains(keyword, case=False, na=False)]
+    results = df[df["box_name"].str.contains(keyword, case=False, na=False, regex=False)]
+    print(results)
     return jsonify(results.to_dict(orient="records"))
 
 @app.route("/add", methods=["POST"])

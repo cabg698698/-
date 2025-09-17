@@ -3,7 +3,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8"/>
-<title>地點查詢 App</title>
+<title>我是維你好</title>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <link href="/static/manifest.json" rel="manifest"/>
 <script>
@@ -46,32 +46,49 @@
 <script>
 
 
-        function add() {
-            const data = {
-                box_name: document.getElementById("add_name").value,
-                address: document.getElementById("add_address").value,
-                lng_lat: document.getElementById("add_lnglat").value,
-                entry_method: document.getElementById("add_entry").value,
-                source_type: document.getElementById("add_source").value,
-                remark: document.getElementById("add_remark").value
-            };
-			let box = document.getElementById("add_name").value;
-			document.getElementById("keyword").value = document.getElementById("add_name").value;
-            fetch("/add", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            }).then(() => search());
-			
+
+		async function add() {
+			const pwd = prompt("請輸入密碼新增");
+			if (pwd !== "9487") return alert("密碼錯誤");
+
+			const boxName = document.getElementById("add_name").value;
+			const data = {
+				box_name: boxName,
+				address: document.getElementById("add_address").value,
+				lng_lat: document.getElementById("add_lnglat").value,
+				entry_method: document.getElementById("add_entry").value,
+				source_type: document.getElementById("add_source").value,
+				remark: document.getElementById("add_remark").value
+			};
+
+			// 檢查 box_name 是否重複
+			const checkRes = await fetch(`/check_box_name?name=${encodeURIComponent(boxName)}`);
+			const checkData = await checkRes.json();
+
+			if (checkData.exists) {
+				return alert("地點名稱已存在，請使用其他名稱");
+			}
+
+			// 執行新增
+			await fetch("/add", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(data)
+			});
+
+			document.getElementById("keyword").value = boxName;
+			search();
+
+			// 清空欄位
 			document.getElementById("add_name").value = "";
 			document.getElementById("add_address").value = "";
 			document.getElementById("add_lnglat").value = "";
 			document.getElementById("add_entry").value = "";
 			document.getElementById("add_source").value = "";
 			document.getElementById("add_remark").value = "";
-			alert("新增地點名" + box + "已成功");
-        }
 
+			alert("新增地點名 " + boxName + " 已成功");
+		}
 
 
         function remove(name) {
@@ -82,6 +99,7 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ box_name: name })
             }).then(() => search());
+			alert("刪除地點名" + name + "已成功");
         }
     </script>
 
@@ -138,7 +156,7 @@ function enableEdit(boxName) {
       <label>電源: <input type="text" id="edit-source_type" value="${values[4]}"></label><br>
       <label>備註: <input type="text" id="edit-remark" value="${values[5]}"></label><br>
       <button onclick="saveEdit('${boxName}')">儲存</button>
-      <button onclick="deleteCard('${boxName}')">刪除</button>
+      <button onclick="remove('${boxName}')">刪除</button>
     </div>
   `;
 }
@@ -160,13 +178,8 @@ function saveEdit(originalBoxName) {
   }).then(res => res.json()).then(() => search());
 }
 
-function deleteCard(boxName) {
-  fetch("/delete", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ box_name: boxName })
-  }).then(res => res.json()).then(() => search());
-}
+
+
 
 
 function search() {

@@ -38,6 +38,29 @@ def add():
     conn.close()
     return jsonify({"status": "success"})
 
+
+
+@app.route("/check_box_name")
+def check_box_name():
+    name = request.args.get("name")
+    if not name:
+        return jsonify({"error": "缺少參數"}), 400
+
+    try:
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM box_data WHERE box_name = %s", (name,))
+        count = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return jsonify({"exists": count > 0})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
 @app.route("/update", methods=["POST"])
 def update():
     data = request.json

@@ -3,7 +3,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8"/>
-<title>地點查詢 App</title>
+<title>我是維你好</title>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <link href="/static/manifest.json" rel="manifest"/>
 <script>
@@ -23,6 +23,7 @@
 <h2>🔍 地點查詢</h2>
 <input id="keyword" placeholder="輸入地點名稱" type="text"/>
 <button onclick="search()">查詢</button>
+<button onclick="delete_search()">清除</button>
 <div id="results"></div>
 
 <h2>➕ 新增地點</h2>
@@ -85,7 +86,22 @@
     </script>
 
 <script>
-function renderCard(item) {
+
+function renderCard(item, totalCount) {
+
+  if (totalCount > 1) {
+    return `
+      <div class="card">
+        <strong>
+          <span style="cursor: pointer; color: green;" onclick="searchByBoxName('${item.box_name}')">
+            ${item.box_name}
+          </span>
+        </strong>
+      </div>
+    `;
+  }
+
+
   let address_link = item.address,address_link_1 = "",address_link_2 = ""
   
   if (address_link.includes("樓")) {
@@ -152,15 +168,32 @@ function deleteCard(boxName) {
   }).then(res => res.json()).then(() => search());
 }
 
+
 function search() {
-  const keyword = document.getElementById("keyword").value;
+  let keyword = document.getElementById("keyword").value;
   fetch(`/search?keyword=${encodeURIComponent(keyword)}`)
     .then(res => res.json())
     .then(data => {
       const container = document.getElementById("results");
-      container.innerHTML = data.map(renderCard).join("");
+      container.innerHTML = data.map((item, index) => renderCard(item, data.length)).join("");
     });
 }
+
+
+
+
+function searchByBoxName(boxName) {
+  document.getElementById("keyword").value = boxName;
+  search();
+}
+
+
+function delete_search() {
+  document.getElementById("keyword").value = "";
+}
+
+
+
 </script>
 
 </body>

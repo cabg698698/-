@@ -118,7 +118,12 @@ function renderCard(item, totalCount) {
       </div>
     `;
   }	
-  elif (totalCount === 0) return alert("查無地點名" + document.getElementById("keyword").value);
+  
+  else if (totalCount === 0) {
+  // 顯示警告
+  return alert("查無地點名 " + document.getElementById("keyword").value);
+  }
+
 
 
 

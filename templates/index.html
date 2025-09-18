@@ -190,7 +190,7 @@ function search() {
       const container = document.getElementById("results");
 
       if (data.length === 0) {
-        alert("查無地點名" + document.getElementById("keyword").value + "資料");
+        alert("查無地點名" + keyword + "資料");
         container.innerHTML = "";
         return;
       }

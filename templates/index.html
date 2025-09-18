@@ -106,7 +106,7 @@
 <script>
 
 function renderCard(item, totalCount) {
-
+  document.getElementById("results").value = totalCount
   if (totalCount > 1) {
     return `
       <div class="card">

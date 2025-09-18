@@ -117,7 +117,9 @@ function renderCard(item, totalCount) {
         </strong>
       </div>
     `;
-  }
+  }	
+  elif (totalCount === 0) return alert("查無地點名" + item.box_name);
+
 
 
   let address_link = item.address,address_link_1 = "",address_link_2 = ""

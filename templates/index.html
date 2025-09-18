@@ -106,6 +106,7 @@
 <script>
 
 function renderCard(item, totalCount) {
+
   if (totalCount > 1) {
     return `
       <div class="card">
@@ -116,14 +117,7 @@ function renderCard(item, totalCount) {
         </strong>
       </div>
     `;
-  }	
-  
-  else if (totalCount === 0) {
-  // 顯示警告
-  return alert("查無地點名 " + document.getElementById("keyword").value);
   }
-
-
 
 
   let address_link = item.address,address_link_1 = "",address_link_2 = ""
@@ -189,15 +183,20 @@ function saveEdit(originalBoxName) {
 
 
 function search() {
-  let keyword = document.getElementById("add_address").value;
-  document.getElementById("add_name").value = "56699"
+  let keyword = document.getElementById("keyword").value;
   fetch(`/search?keyword=${encodeURIComponent(keyword)}`)
     .then(res => res.json())
     .then(data => {
       const container = document.getElementById("results");
+
+      if (data.length === 0) {
+        alert("查無地點名" + document.getElementById("keyword").value + "資料");
+        container.innerHTML = "";
+        return;
+      }
+
       container.innerHTML = data.map((item, index) => renderCard(item, data.length)).join("");
     });
-	document.getElementById("add_name").value = data.length
 }
 
 

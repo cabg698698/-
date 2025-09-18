@@ -106,7 +106,6 @@
 <script>
 
 function renderCard(item, totalCount) {
-  document.getElementById("add_name").value = totalCount
   if (totalCount > 1) {
     return `
       <div class="card">
@@ -190,13 +189,15 @@ function saveEdit(originalBoxName) {
 
 
 function search() {
-  let keyword = document.getElementById("keyword").value;
+  let keyword = document.getElementById("add_address").value;
+  document.getElementById("add_name").value = data.length
   fetch(`/search?keyword=${encodeURIComponent(keyword)}`)
     .then(res => res.json())
     .then(data => {
       const container = document.getElementById("results");
       container.innerHTML = data.map((item, index) => renderCard(item, data.length)).join("");
     });
+	document.getElementById("add_name").value = data.length
 }
 
 

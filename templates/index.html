@@ -190,7 +190,7 @@ function saveEdit(originalBoxName) {
 
 function search() {
   let keyword = document.getElementById("add_address").value;
-  document.getElementById("add_name").value = data.length
+  document.getElementById("add_name").value = "56699"
   fetch(`/search?keyword=${encodeURIComponent(keyword)}`)
     .then(res => res.json())
     .then(data => {
